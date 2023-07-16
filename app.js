@@ -46,7 +46,7 @@ var mouse = {
   x: undefined,
   y: undefined,
 };
-var minRadius = 5;
+var minRadius = 1;
 var colorArray = ["011936", "465362", "82a3a1", "9fc490", "c0dfa1"];
 var circleArray = [];
 var clearingSpace = 200;
@@ -54,21 +54,31 @@ var clearingSpeed = 10;
 
 function init() {
   circleArray = [];
-  for (var i = 0; i < 2; i++) {
-    var radius = Math.random() * 10 + minRadius;
+  for (var i = 0; i < 2000; i++) {
+    var radius = (Math.random() * 1) + minRadius;
     var x = Math.random() * (innerWidth - radius * 2) + radius;
     var y = Math.random() * (innerHeight - radius * 2) + radius;
     var dx = (Math.random() - 0.5) * 10;
     var dy = (Math.random() - 0.5) * 10;
     var originalSpeedX = dx;
     var originalSpeedY = dy;
+    let ogSpeedXNeg = new Boolean(false);
+    let ogSpeedYNeg = new Boolean(false);
     var stateOn = new Boolean(false);
 
-    circleArray.push(new Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY, stateOn));
+    if (originalSpeedX < 0) {
+      ogSpeedXNeg = true;
+    }
+
+    if (originalSpeedY < 0) {
+      ogSpeedYNeg = true;
+    }
+
+    circleArray.push(new Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY, stateOn, ogSpeedXNeg, ogSpeedYNeg));
   }
 }
 
-function Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY, stateOn) {
+function Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY, stateOn, ogSpeedXNeg, ogSpeedYNeg) {
   this.x = x;
   this.y = y;
   this.radius = radius;
@@ -82,6 +92,8 @@ function Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY, stateOn) {
   let diffX = mouse.x - this.x;
   let diffY = mouse.y - y;
   this.stateOn = stateOn;
+  this.ogSpeedXNeg = ogSpeedXNeg;
+  this.ogSpeedYNeg = ogSpeedYNeg;
 
   this.draw = function () {
     c.fillStyle = "#" + randomColor;
@@ -116,8 +128,24 @@ function Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY, stateOn) {
     if (mouse.x - this.x > clearingSpace || (mouse.x - this.x < -clearingSpace && mouse.y - this.y > clearingSpace) || mouse.y - this.y < -clearingSpace) {
       if (this.stateOn === true) {
         console.log(this.originalSpeedX + ", " + this.originalSpeedY + ", " + this.dx + ", " + this.dy + ", ");
-        this.dx = this.originalSpeedX;
-        this.dy = this.originalSpeedY;
+        console.log(ogSpeedXNeg + " " + ogSpeedYNeg);
+        if (this.ogSpeedXNeg == true && this.dx > 0) {
+          this.dx = -this.originalSpeedX;
+        }
+        if (this.ogSpeedXNeg == false && this.dx < 0) {
+          this.dx = -this.originalSpeedX;
+        } else {
+          this.dx = this.originalSpeedX;
+        }
+        if (this.ogSpeedYNeg == true && this.dy > 0) {
+          this.dy = -this.originalSpeedY;
+        }
+        if (this.ogSpeedYNeg == false && this.dy < 0) {
+          this.dy = -this.originalSpeedY;
+        } else {
+          this.dy = this.originalSpeedY;
+        }
+
         this.stateOn = false;
       }
     }
