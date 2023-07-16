@@ -49,22 +49,26 @@ var mouse = {
 var minRadius = 5;
 var colorArray = ["011936", "465362", "82a3a1", "9fc490", "c0dfa1"];
 var circleArray = [];
+var clearingSpace = 200;
+var clearingSpeed = 10;
 
 function init() {
   circleArray = [];
-  for (var i = 0; i <= 1000; i++) {
+  for (var i = 0; i < 2; i++) {
+    var radius = Math.random() * 10 + minRadius;
     var x = Math.random() * (innerWidth - radius * 2) + radius;
     var y = Math.random() * (innerHeight - radius * 2) + radius;
     var dx = (Math.random() - 0.5) * 10;
     var dy = (Math.random() - 0.5) * 10;
     var originalSpeedX = dx;
     var originalSpeedY = dy;
-    var radius = Math.random() * 25 + minRadius;
-    circleArray.push(new Circle(x, y, radius, dx, dy));
+    var stateOn = new Boolean(false);
+
+    circleArray.push(new Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY, stateOn));
   }
 }
 
-function Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY) {
+function Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY, stateOn) {
   this.x = x;
   this.y = y;
   this.radius = radius;
@@ -75,6 +79,10 @@ function Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY) {
   let randomColor = colorArray[Math.floor(Math.random() * 5)];
   let dxNew = dx;
   let dyNew = dy;
+  let diffX = mouse.x - this.x;
+  let diffY = mouse.y - y;
+  this.stateOn = stateOn;
+
   this.draw = function () {
     c.fillStyle = "#" + randomColor;
     c.beginPath();
@@ -84,11 +92,12 @@ function Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY) {
   };
 
   this.update = function () {
-    if (this.x > innerWidth - 30 || this.x < 30) {
+    diffX = mouse.x - this.x;
+    if (this.x > innerWidth - this.radius || this.x < 0 + this.radius) {
       this.dx = -this.dx;
     }
 
-    if (this.y < 30 || this.y > innerHeight - 30) {
+    if (this.y < 0 + this.radius || this.y > innerHeight - this.radius) {
       this.dy = -this.dy;
     }
 
@@ -97,29 +106,20 @@ function Circle(x, y, radius, dx, dy, originalSpeedX, originalSpeedY) {
 
     //interactivity
     if (mouse.x - this.x < 100 && mouse.x - this.x > -100 && mouse.y - this.y < 100 && mouse.y - this.y > -100) {
-      if (this.radius <= 50) {
+      if (this.radius <= radius * 7) {
         this.radius += minRadius;
-      }    if (mouse.x - this.x > 100 && mouse.x - this.x < -100 && mouse.y - this.y > 100 && mouse.y - this.y < -100) {
-      this.dx = this.originalSpeedX;
-      this.dy = this.originalSpeedY;
-    }
-    }
-
-    else if (this.radius >= radius) {
+      }
+    } else if (this.radius >= radius) {
       this.radius -= minRadius;
     }
-  };
 
-  this.scatter = function () {
-    if (mouse.x - this.x < 100 && mouse.x - this.x > -100 && mouse.y - this.y < 100 && mouse.y - this.y > -100) {
-      dxNew = this.dx * 2;
-      dyNew = this.dy * 2;
-      this.dx = dxNew;
-      this.dy = dyNew;
-      this.radius = 100;
-      //   if (mouse.x - this.x > 100 && mouse.x - this.x < -100 && mouse.y - this.y > 100 && mouse.y - this.y < -100){
-      //     this.radius=2000;
-      // }
+    if (mouse.x - this.x > clearingSpace || (mouse.x - this.x < -clearingSpace && mouse.y - this.y > clearingSpace) || mouse.y - this.y < -clearingSpace) {
+      if (this.stateOn === true) {
+        console.log(this.originalSpeedX + ", " + this.originalSpeedY + ", " + this.dx + ", " + this.dy + ", ");
+        this.dx = this.originalSpeedX;
+        this.dy = this.originalSpeedY;
+        this.stateOn = false;
+      }
     }
   };
 }
@@ -136,14 +136,21 @@ window.addEventListener("resize", function () {
 });
 
 window.addEventListener("click", function (event) {
-  mouse.x = event.clientX;
+  mouse.x - event.clientX;
   mouse.y = event.clientY;
-  // console.log(mouse.x);
+  console.log(mouse.x - event.clientX);
   // console.log(mouse.y);
-  for (let i = 0; i <= circleArray.length; i++) {
-    console.log(circleArray[i].dx);
-    console.log(circleArray[i].dy);
-    circleArray[i].scatter();
+  for (var i = 0; i < circleArray.length; i++) {
+    if (mouse.x - circleArray[i].x < clearingSpace && mouse.x - circleArray[i].x > -clearingSpace && mouse.y - circleArray[i].y < clearingSpace && mouse.y - circleArray[i].y > -clearingSpace) {
+      // if (mouse.y - circleArray[i].y > 100 || mouse.y - circleArray[i].y < -100) {
+      dxNew = circleArray[i].dx * clearingSpeed;
+      dyNew = circleArray[i].dy * clearingSpeed;
+      circleArray[i].dx = dxNew;
+      circleArray[i].dy = dyNew;
+      // circleArray[i].radius = 100;
+      circleArray[i].stateOn = true;
+      // }
+    }
   }
 });
 
@@ -155,6 +162,8 @@ function animate() {
     circleArray[i].draw();
     circleArray[i].update();
   }
+  // console.log(circleArray[0].dx);
+  // console.log(circleArray[0].dy);
 }
 init();
 animate();
